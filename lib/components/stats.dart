@@ -8,7 +8,24 @@ class Stats extends StatelessWidget {
   });
 
   final double fuelEfficiency;
-  final double odometer;
+  final int odometer;
+
+  TableRow _statsItem<T>(BuildContext context, String title, T value, String unit) =>
+      TableRow(
+        children: [
+          Text(title),
+          Text(
+            '$value',
+            style: Theme.of(context).textTheme.displaySmall,
+            textAlign: TextAlign.end,
+          ),
+          const SizedBox(),
+          Text(
+            unit,
+            style: Theme.of(context).textTheme.headlineLarge,
+          ),
+        ],
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -23,69 +40,22 @@ class Stats extends StatelessWidget {
                 children: [
                   Text(
                     '統計',
-                    style: Theme.of(context).textTheme.titleMedium,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary),
                   ),
                   const Divider(),
-                  SizedBox(
-                    width: double.infinity,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Flexible(
-                          flex: 1,
-                          child: Text('平均燃費'),
-                        ),
-                        const Flexible(
-                          flex: 1,
-                          child: SizedBox(width: double.infinity),
-                        ),
-                        Flexible(
-                          flex: 0,
-                          child: Text(
-                            '$fuelEfficiency',
-                            style: Theme.of(context).textTheme.displayMedium,
-                          ),
-                        ),
-                        Flexible(
-                            flex: 1,
-                            child: Text(
-                              'km/L',
-                              style: Theme.of(context).textTheme.displaySmall,
-                            )
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  SizedBox(
-                    width: double.infinity,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Flexible(
-                          flex: 1,
-                          child: Text('走行距離'),
-                        ),
-                        const Flexible(
-                          flex: 1,
-                          child: SizedBox(width: double.infinity),
-                        ),
-                        Flexible(
-                          flex: 0,
-                          child: Text(
-                            '$odometer',
-                            style: Theme.of(context).textTheme.displayMedium,
-                          ),
-                        ),
-                        Flexible(
-                            flex: 1,
-                            child: Text(
-                              'km',
-                              style: Theme.of(context).textTheme.displaySmall,
-                            )
-                        ),
-                      ],
-                    ),
+                  Table(
+                    defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                    columnWidths: const <int, TableColumnWidth>{
+                      0: IntrinsicColumnWidth(),
+                      1: FlexColumnWidth(),
+                      2: FixedColumnWidth(16.0),
+                      3: IntrinsicColumnWidth(),
+                    },
+                    children: [
+                      _statsItem(context, '最高燃費', fuelEfficiency, 'km/L'),
+                      _statsItem(context, '走行距離', odometer, 'km'),
+                      _statsItem(context, '総給油量', fuelEfficiency, 'L'),
+                    ],
                   ),
                 ],
               )
