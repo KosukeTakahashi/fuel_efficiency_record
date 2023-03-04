@@ -30,17 +30,28 @@ class AverageFuelEfficiency extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisSize: MainAxisSize.max,
                   children: [
-                    Text(
-                      '平均',
-                      style: Theme.of(context).textTheme.titleLarge,
+                    Expanded(
+                      flex: 1,
+                      child: Text(
+                        '平均',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
                     ),
-                    Text('$fuelEfficiency',
-                        style: Theme.of(context).textTheme.displayLarge),
-                    Text(
-                      'km/L',
-                      style: Theme.of(context).textTheme.titleLarge,
+                    Expanded(
+                      flex: 0,
+                      child: Text('$fuelEfficiency',
+                          style: Theme.of(context).textTheme.displayLarge
+                      ),
+                    ),
+                    Expanded(
+                      flex: 1,
+                      child: Text(
+                        'km/L',
+                        textAlign: TextAlign.end,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
                     ),
                   ],
                 ),

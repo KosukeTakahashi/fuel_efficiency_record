@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:fuel_efficiency_record/components/average_fuel_efficiency.dart';
+import 'package:fuel_efficiency_record/components/new_refuel_entry_dialog.dart';
 import 'package:fuel_efficiency_record/components/stats.dart';
 import 'package:fuel_efficiency_record/components/refuel_history.dart';
 import 'package:fuel_efficiency_record/models/refuel_entry.dart';
+import 'package:fuel_efficiency_record/routes/slide_fade_in_route.dart';
 
 class Dashboard extends StatelessWidget {
   const Dashboard({super.key});
@@ -12,6 +14,7 @@ class Dashboard extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('燃費記録'),
+        backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
       ),
       backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
       body: Padding(
@@ -27,10 +30,11 @@ class Dashboard extends StatelessWidget {
             RefuelHistory(
               refuelEntries: [
                 for (int i = 0; i < 8; i++)
-                  RefuelEntry(
+                  RefuelEntry.defaultPrice(
                     dateTime: DateTime.now(),
                     amount: 16.83,
-                    unitPrice: 148
+                    unitPrice: 148,
+                    odometer: 12000 + 100 * i,
                   ),
               ],
             ),
@@ -44,7 +48,19 @@ class Dashboard extends StatelessWidget {
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.local_gas_station),
         label: const Text('給油'),
-        onPressed: () {},
+        onPressed: () async {
+          // showDialog(
+          //   context: context,
+          //   barrierColor: Theme.of(context).colorScheme.surface,
+          //   builder: (BuildContext context) => const Dialog.fullscreen(
+          //     child: NewRefuelEntryDialog(),
+          //   ),
+          // );
+          await Navigator.of(context).push(SlideFadeInRoute(widget: NewRefuelEntryDialog()));
+          // await Navigator.of(context).push(MaterialPageRoute(
+          //   builder: (context) => const NewRefuelEntryDialog()
+          // ));
+        },
       ),
     );
   }

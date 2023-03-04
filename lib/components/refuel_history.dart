@@ -39,6 +39,14 @@ class RefuelHistory extends StatelessWidget {
                           '${entry.amount} L',
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
+                        // Text(
+                        //   '${0 < entry.key ? entry.value.odometer - refuelEntries[entry.key-1].odometer : '---'}km',
+                        //   style: Theme.of(context).textTheme.titleLarge,
+                        // ),
+                        Text(
+                          '${entry.price} 円',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
                         Text(
                           _showDateTime(entry.dateTime),
                           style: Theme.of(context).textTheme.titleSmall,
@@ -47,6 +55,14 @@ class RefuelHistory extends StatelessWidget {
                     ),
                   ),
                 ),
+                // ...refuelEntries.asMap().entries.map((entry) =>
+                //     ListTile(
+                //       // contentPadding: EdgeInsets.symmetric(vertical: 16),
+                //       title: Text('${entry.value.amount} L'),
+                //       subtitle: Text('100 km'),
+                //       trailing: Text(_showDateTime(entry.value.dateTime)),
+                //     )
+                // ),
               ],
             )
         ),
