@@ -15,58 +15,33 @@ class RefuelHistory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: Card(
-        elevation: 0,
-        child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '給油履歴',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary),
-                ),
-                const Divider(),
-                ...refuelEntries.map((entry) =>
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '${entry.amount} L',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        // Text(
-                        //   '${0 < entry.key ? entry.value.odometer - refuelEntries[entry.key-1].odometer : '---'}km',
-                        //   style: Theme.of(context).textTheme.titleLarge,
-                        // ),
-                        Text(
-                          '${entry.price} 円',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        Text(
-                          _showDateTime(entry.dateTime),
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                // ...refuelEntries.asMap().entries.map((entry) =>
-                //     ListTile(
-                //       // contentPadding: EdgeInsets.symmetric(vertical: 16),
-                //       title: Text('${entry.value.amount} L'),
-                //       subtitle: Text('100 km'),
-                //       trailing: Text(_showDateTime(entry.value.dateTime)),
-                //     )
-                // ),
-              ],
-            )
+    return Column(
+      children: refuelEntries.map((entry) =>
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${entry.amount} L',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              // Text(
+              //   '${0 < entry.key ? entry.value.odometer - refuelEntries[entry.key-1].odometer : '---'}km',
+              //   style: Theme.of(context).textTheme.titleLarge,
+              // ),
+              Text(
+                '${entry.price} 円',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              Text(
+                _showDateTime(entry.dateTime),
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+            ],
+          ),
         ),
-      )
+      ).toList(),
     );
   }
 }

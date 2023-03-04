@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 class Stats extends StatelessWidget {
   const Stats({
     super.key,
-    required this.fuelEfficiency,
+    required this.bestFuelEfficiency,
     required this.odometer,
+    required this.totalFuelAmount,
   });
 
-  final double fuelEfficiency;
+  final double bestFuelEfficiency;
   final int odometer;
+  final int totalFuelAmount;
 
   TableRow _statsItem<T>(BuildContext context, String title, T value, String unit) =>
       TableRow(
@@ -22,45 +24,26 @@ class Stats extends StatelessWidget {
           const SizedBox(),
           Text(
             unit,
-            style: Theme.of(context).textTheme.headlineLarge,
+            style: Theme.of(context).textTheme.titleLarge,
           ),
         ],
       );
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-        width: double.infinity,
-        child: Card(
-          elevation: 0,
-          child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '統計',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary),
-                  ),
-                  const Divider(),
-                  Table(
-                    defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                    columnWidths: const <int, TableColumnWidth>{
-                      0: IntrinsicColumnWidth(),
-                      1: FlexColumnWidth(),
-                      2: FixedColumnWidth(16.0),
-                      3: IntrinsicColumnWidth(),
-                    },
-                    children: [
-                      _statsItem(context, '最高燃費', fuelEfficiency, 'km/L'),
-                      _statsItem(context, '走行距離', odometer, 'km'),
-                      _statsItem(context, '総給油量', fuelEfficiency, 'L'),
-                    ],
-                  ),
-                ],
-              )
-          ),
-        )
+    return Table(
+      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+      columnWidths: const <int, TableColumnWidth>{
+        0: IntrinsicColumnWidth(),
+        1: FlexColumnWidth(),
+        2: FixedColumnWidth(16.0),
+        3: IntrinsicColumnWidth(),
+      },
+      children: [
+        _statsItem(context, '最高燃費', bestFuelEfficiency, 'km/L'),
+        _statsItem(context, '走行距離', odometer, 'km'),
+        _statsItem(context, '総給油量', totalFuelAmount, 'L'),
+      ],
     );
   }
 }
