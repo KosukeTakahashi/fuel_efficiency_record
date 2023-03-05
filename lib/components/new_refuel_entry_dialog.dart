@@ -1,7 +1,33 @@
 import 'package:flutter/material.dart';
 
-class NewRefuelEntryDialog extends StatelessWidget {
+class NewRefuelEntryDialog extends StatefulWidget {
   const NewRefuelEntryDialog({super.key});
+
+  @override
+  State<StatefulWidget> createState() => _NewRefuelEntryDialogState();
+}
+
+class _NewRefuelEntryDialogState extends State<NewRefuelEntryDialog> {
+  late GlobalKey<FormState> _formKey;
+  late TextEditingController _totalPriceTextFieldController;
+  late TextEditingController _dateTextFieldController;
+  late TextEditingController _timeTextFieldController;
+  late DateTime _dateTime;
+  double? _refuelAmount;
+  int? _unitPrice;
+  int? _totalPrice;
+  int? _odometer;
+
+  static String? _intFormValidator(String? input) {
+    if (input == null || input.isEmpty) {
+      return null;
+    }
+
+    if (int.tryParse(input) == null) {
+      return '整数を入力してください';
+    }
+    return null;
+  }
 
   TableRow _buildStatsItem<T>(BuildContext context, Icon icon, String title,
           T value, String unit) =>
@@ -28,6 +54,25 @@ class NewRefuelEntryDialog extends StatelessWidget {
         ],
       );
 
+  String _dateToString(DateTime dateTime) =>
+      '${dateTime.year}/${dateTime.month}/${dateTime.day}';
+
+  String _timeToString(TimeOfDay time) => '${time.hour}:${time.minute}';
+
+  @override
+  void initState() {
+    super.initState();
+    _formKey = GlobalKey();
+    _dateTime = DateTime.now();
+    _totalPriceTextFieldController = TextEditingController();
+    _dateTextFieldController = TextEditingController(
+      text: _dateToString(_dateTime),
+    );
+    _timeTextFieldController = TextEditingController(
+      text: _timeToString(TimeOfDay.fromDateTime(_dateTime)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,78 +86,186 @@ class NewRefuelEntryDialog extends StatelessWidget {
         title: const Text('新しい給油履歴'),
         actions: [
           TextButton(
-            child: const Text('保存'),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          )
+              onPressed: (_refuelAmount != null) &&
+                      (_unitPrice != null) &&
+                      (_totalPrice != null) &&
+                      (_odometer != null)
+                  ? () {
+                      Navigator.pop(context);
+                    }
+                  : null,
+              child: const Text('保存')),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('給油情報'),
-            const SizedBox(height: 16.0),
-            Row(
-              children: [
-                Expanded(
-                  flex: 1,
-                  child: TextField(
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: '給油量',
-                      suffixText: 'L',
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('給油情報'),
+              const SizedBox(height: 16.0),
+              Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 1,
+                          child: TextField(
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              labelText: '給油量',
+                              suffixText: 'L',
+                            ),
+                            onChanged: (input) {
+                              setState(() {
+                                _refuelAmount = double.tryParse(input);
+                                if (_refuelAmount != null && _unitPrice != null) {
+                                  _totalPrice = (_refuelAmount! * _unitPrice!).floor();
+                                }
+                              });
+                              _formKey.currentState!.validate();
+
+                              if (_refuelAmount != null && _unitPrice != null) {
+                                _totalPriceTextFieldController.text = _totalPrice.toString();
+                              }
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 16.0),
+                        Expanded(
+                          flex: 1,
+                          child: TextFormField(
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              labelText: '単価',
+                              suffixText: '円/L',
+                            ),
+                            onChanged: (input) {
+                              setState(() {
+                                _unitPrice = int.tryParse(input);
+                                if (_refuelAmount != null && _unitPrice != null) {
+                                  _totalPrice = (_refuelAmount! * _unitPrice!).floor();
+                                }
+                              });
+                              _formKey.currentState!.validate();
+
+                              if (_refuelAmount != null && _unitPrice != null) {
+                                _totalPriceTextFieldController.text = _totalPrice.toString();
+                              }
+                            },
+                            validator: _intFormValidator,
+                          ),
+                        ),
+                      ],
                     ),
-                    onChanged: (input) {},
-                  ),
-                ),
-                const SizedBox(width: 16.0),
-                Expanded(
-                  flex: 1,
-                  child: TextField(
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: '単価',
-                      suffixText: '円/L',
+                    const SizedBox(height: 16.0),
+                    TextFormField(
+                      controller: _totalPriceTextFieldController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: '総額',
+                          suffixText: '円'),
+                      onChanged: (input) {
+                        setState(() {
+                          _totalPrice = int.tryParse(input);
+                        });
+                        _formKey.currentState!.validate();
+                      },
+                      validator: _intFormValidator,
                     ),
-                    onChanged: (input) {},
-                  ),
+                    const SizedBox(height: 16.0),
+                    TextFormField(
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: '現在の走行距離',
+                        suffixText: 'km',
+                      ),
+                      onChanged: (input) {
+                        setState(() {
+                          _odometer = int.tryParse(input);
+                        });
+                        _formKey.currentState!.validate();
+                      },
+                      validator: _intFormValidator,
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 16.0),
-            TextField(
-              decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: '総額',
-                  suffixText: '円'),
-              onChanged: (input) {},
-            ),
-            const SizedBox(height: 16.0),
-            TextField(
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: '現在の走行距離',
-                suffixText: 'km',
               ),
-              onChanged: (input) {},
-            ),
-            const SizedBox(height: 16.0),
-            TextField(
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: '日時',
+              const SizedBox(height: 16.0),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 1,
+                    child: TextField(
+                      controller: _dateTextFieldController,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: '日付',
+                      ),
+                      readOnly: true,
+                      onTap: () async {
+                        final dateTime = await showDatePicker(
+                          context: context,
+                          initialDate: _dateTime,
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime.now(),
+                        );
+                        if (dateTime != null) {
+                          _dateTextFieldController.text =
+                              _dateToString(dateTime);
+                          setState(() {
+                            _dateTime = _dateTime.copyWith(
+                              year: dateTime.year,
+                              month: dateTime.month,
+                              day: dateTime.day,
+                            );
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16.0),
+                  Expanded(
+                    flex: 1,
+                    child: TextField(
+                      controller: _timeTextFieldController,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: '時刻',
+                      ),
+                      readOnly: true,
+                      onTap: () async {
+                        final timeOfDay = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.fromDateTime(_dateTime),
+                        );
+                        if (timeOfDay != null) {
+                          _timeTextFieldController.text =
+                              _timeToString(timeOfDay);
+                          setState(() {
+                            _dateTime = _dateTime.copyWith(
+                              hour: timeOfDay.hour,
+                              minute: timeOfDay.minute,
+                            );
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                ],
               ),
-              onChanged: (input) {},
-            ),
-            const SizedBox(height: 16.0),
-            const Text('今回の記録'),
-            // const AverageFuelEfficiency(fuelEfficiency: 20.3),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Table(
+              const SizedBox(height: 32.0),
+              const Text('今回の記録'),
+              // const AverageFuelEfficiency(fuelEfficiency: 20.3),
+              Table(
                 defaultVerticalAlignment: TableCellVerticalAlignment.middle,
                 columnWidths: const <int, TableColumnWidth>{
                   0: IntrinsicColumnWidth(),
@@ -125,20 +278,20 @@ class NewRefuelEntryDialog extends StatelessWidget {
                     context,
                     const Icon(Icons.drive_eta),
                     '前回からの走行距離',
-                    389,
+                    '---',
                     'km',
                   ),
                   _buildStatsItem(
                     context,
                     const Icon(Icons.speed),
                     '今回の平均燃費',
-                    24.0,
+                    '---',
                     'km/L',
                   ),
                 ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
