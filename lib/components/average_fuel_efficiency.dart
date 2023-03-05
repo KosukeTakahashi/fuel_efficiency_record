@@ -6,7 +6,7 @@ class AverageFuelEfficiency extends StatelessWidget {
     required this.fuelEfficiency,
   });
 
-  final double fuelEfficiency;
+  final double? fuelEfficiency;
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +22,7 @@ class AverageFuelEfficiency extends StatelessWidget {
         ),
         Expanded(
           flex: 0,
-          child: Text('$fuelEfficiency',
+          child: Text(fuelEfficiency == null ? '---' : ((fuelEfficiency! * 10.0).floor() / 10.0).toString(),
               style: Theme.of(context).textTheme.displayLarge
           ),
         ),

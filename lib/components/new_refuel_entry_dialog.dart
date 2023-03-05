@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:fuel_efficiency_record/models/refuel_entry.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart';
+import 'package:fuel_efficiency_record/constants.dart';
 
 class NewRefuelEntryDialog extends StatefulWidget {
   const NewRefuelEntryDialog({super.key});
@@ -13,10 +17,12 @@ class _NewRefuelEntryDialogState extends State<NewRefuelEntryDialog> {
   late TextEditingController _dateTextFieldController;
   late TextEditingController _timeTextFieldController;
   late DateTime _dateTime;
+  RefuelEntry? _prevRefuelEntry;
   double? _refuelAmount;
   int? _unitPrice;
   int? _totalPrice;
   int? _odometer;
+  bool _isRegisterInProgress = false;
 
   static String? _intFormValidator(String? input) {
     if (input == null || input.isEmpty) {
@@ -62,6 +68,26 @@ class _NewRefuelEntryDialogState extends State<NewRefuelEntryDialog> {
   @override
   void initState() {
     super.initState();
+
+    Future(() async {
+      final db =
+        await openDatabase(join(await getDatabasesPath(), refuelHistoryDBName));
+      final prevRefuel = await db.query(
+        refuelHistoryTableName,
+        where:
+        'timestamp = (SELECT MAX(${RefuelEntry.timestampFieldName}) FROM $refuelHistoryTableName)',
+      );
+
+      setState(() {
+        if (prevRefuel.isNotEmpty) {
+          _prevRefuelEntry = RefuelEntry.fromMap(prevRefuel[0]);
+        }
+        else {
+          _prevRefuelEntry = null;
+        }
+      });
+    });
+
     _formKey = GlobalKey();
     _dateTime = DateTime.now();
     _totalPriceTextFieldController = TextEditingController();
@@ -85,13 +111,39 @@ class _NewRefuelEntryDialogState extends State<NewRefuelEntryDialog> {
         ),
         title: const Text('新しい給油履歴'),
         actions: [
+          if (_isRegisterInProgress)
+            const SizedBox(
+              width: 32,
+              height: 32,
+              child: CircularProgressIndicator(),
+            ),
           TextButton(
               onPressed: (_refuelAmount != null) &&
                       (_unitPrice != null) &&
                       (_totalPrice != null) &&
                       (_odometer != null)
                   ? () {
-                      Navigator.pop(context);
+                      setState(() {
+                        _isRegisterInProgress = true;
+                      });
+                      Future(() async {
+                        final refuelEntry = RefuelEntry(
+                          dateTime: _dateTime,
+                          refuelAmount: _refuelAmount!,
+                          unitPrice: _unitPrice!,
+                          odometer: _odometer!,
+                          totalPrice: _totalPrice!,
+                        );
+                        final db =
+                          await openDatabase(join(await getDatabasesPath(), refuelHistoryDBName));
+                        await db.insert(refuelHistoryTableName, refuelEntry.toMap(), conflictAlgorithm: ConflictAlgorithm.fail);
+                        return 0;
+                      }).then((_) {
+                        setState(() {
+                          _isRegisterInProgress = false;
+                        });
+                        Navigator.pop(context);
+                      });
                     }
                   : null,
               child: const Text('保存')),
@@ -124,14 +176,17 @@ class _NewRefuelEntryDialogState extends State<NewRefuelEntryDialog> {
                             onChanged: (input) {
                               setState(() {
                                 _refuelAmount = double.tryParse(input);
-                                if (_refuelAmount != null && _unitPrice != null) {
-                                  _totalPrice = (_refuelAmount! * _unitPrice!).floor();
+                                if (_refuelAmount != null &&
+                                    _unitPrice != null) {
+                                  _totalPrice =
+                                      (_refuelAmount! * _unitPrice!).floor();
                                 }
                               });
                               _formKey.currentState!.validate();
 
                               if (_refuelAmount != null && _unitPrice != null) {
-                                _totalPriceTextFieldController.text = _totalPrice.toString();
+                                _totalPriceTextFieldController.text =
+                                    _totalPrice.toString();
                               }
                             },
                           ),
@@ -149,14 +204,17 @@ class _NewRefuelEntryDialogState extends State<NewRefuelEntryDialog> {
                             onChanged: (input) {
                               setState(() {
                                 _unitPrice = int.tryParse(input);
-                                if (_refuelAmount != null && _unitPrice != null) {
-                                  _totalPrice = (_refuelAmount! * _unitPrice!).floor();
+                                if (_refuelAmount != null &&
+                                    _unitPrice != null) {
+                                  _totalPrice =
+                                      (_refuelAmount! * _unitPrice!).floor();
                                 }
                               });
                               _formKey.currentState!.validate();
 
                               if (_refuelAmount != null && _unitPrice != null) {
-                                _totalPriceTextFieldController.text = _totalPrice.toString();
+                                _totalPriceTextFieldController.text =
+                                    _totalPrice.toString();
                               }
                             },
                             validator: _intFormValidator,
@@ -278,14 +336,24 @@ class _NewRefuelEntryDialogState extends State<NewRefuelEntryDialog> {
                     context,
                     const Icon(Icons.drive_eta),
                     '前回からの走行距離',
-                    '---',
+                    (_prevRefuelEntry == null || _odometer == null)
+                        ? '---'
+                        : (_odometer! - _prevRefuelEntry!.odometer),
                     'km',
                   ),
                   _buildStatsItem(
                     context,
                     const Icon(Icons.speed),
                     '今回の平均燃費',
-                    '---',
+                    (_prevRefuelEntry == null ||
+                            _odometer == null ||
+                            _refuelAmount == null)
+                        ? '---'
+                        : ((_odometer! - _prevRefuelEntry!.odometer) /
+                                    _refuelAmount! *
+                                    10.0)
+                                .round() /
+                            10.0,
                     'km/L',
                   ),
                 ],

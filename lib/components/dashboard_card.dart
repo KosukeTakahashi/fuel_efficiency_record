@@ -5,10 +5,12 @@ class DashboardCard extends StatelessWidget {
     super.key,
     required this.title,
     required this.child,
+    required this.onTap,
   });
 
   final String title;
   final Widget child;
+  final void Function()? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -21,12 +23,24 @@ class DashboardCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(color: Theme.of(context).colorScheme.primary),
+              GestureDetector(
+                onTap: onTap,
+                child: Row(
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(color: Theme.of(context).colorScheme.primary),
+                    ),
+                    if (onTap != null)
+                      Icon(
+                        Icons.navigate_next,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                  ],
+                ),
               ),
               const Divider(),
               Padding(
