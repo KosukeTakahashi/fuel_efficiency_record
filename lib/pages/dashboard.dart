@@ -53,7 +53,7 @@ class _DashboardPageState extends State<DashboardPage> {
         'SELECT ${RefuelEntry.odometerFieldName} FROM $refuelHistoryTableName WHERE timestamp = (SELECT MIN(${RefuelEntry.timestampFieldName}) FROM $refuelHistoryTableName)');
     final totalFuelAmountRes = await db.rawQuery(
         'SELECT SUM(${RefuelEntry.refuelAmountFieldName}) FROM $refuelHistoryTableName');
-    final firstFuelAmmountRes = await db.rawQuery(
+    final firstFuelAmountRes = await db.rawQuery(
         'SELECT ${RefuelEntry.refuelAmountFieldName} FROM $refuelHistoryTableName ORDER BY ${RefuelEntry.timestampFieldName} ASC LIMIT 1');
 
     if (maxOdometerRes.isNotEmpty &&
@@ -65,11 +65,11 @@ class _DashboardPageState extends State<DashboardPage> {
           minOdometerRes[0][RefuelEntry.odometerFieldName] as int;
       final totalFuelAmount = totalFuelAmountRes[0]
           ['SUM(${RefuelEntry.refuelAmountFieldName})'] as double;
-      final firstFuelAmount = firstFuelAmmountRes[0]
+      final firstFuelAmount = firstFuelAmountRes[0]
           [RefuelEntry.refuelAmountFieldName] as double;
       final fuelEfficiency = (maxOdometer - minOdometer) / (totalFuelAmount - firstFuelAmount);
       setState(() {
-        _fuelEfficiency = fuelEfficiency;
+        _fuelEfficiency = fuelEfficiency.isNaN ? null : fuelEfficiency;
         _totalFuelAmount = totalFuelAmount;
         _odometer = maxOdometer;
       });

@@ -4,6 +4,7 @@ import 'package:fuel_efficiency_record/models/refuel_entry.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:fuel_efficiency_record/constants.dart';
+import 'package:fuel_efficiency_record/pages/refuel_entry_details.dart';
 
 class RefuelHistoryPage extends StatefulWidget {
   const RefuelHistoryPage({super.key});
@@ -16,7 +17,8 @@ class _RefuelHistoryPageState extends State<RefuelHistoryPage> {
   Database? _db;
 
   Future<Database> _openDatabase() async {
-    return await openDatabase(join(await getDatabasesPath(), refuelHistoryDBName));
+    return await openDatabase(
+        join(await getDatabasesPath(), refuelHistoryDBName));
   }
 
   Future<int> _countRefuelEntries() async {
@@ -52,8 +54,7 @@ class _RefuelHistoryPageState extends State<RefuelHistoryPage> {
     return null;
   }
 
-  String _dateTimeString(DateTime dateTime) =>
-      DateFormat('yyyy/MM/dd HH:mm').format(dateTime);
+  static final _dateTimeString = DateFormat('yyyy/MM/dd hh:mm').format;
 
   @override
   void initState() {
@@ -97,7 +98,12 @@ class _RefuelHistoryPageState extends State<RefuelHistoryPage> {
                     }
 
                     return InkWell(
-                      onTap: () {},
+                      onTap: () async {
+                        await Navigator.of(context).pushNamed(
+                            '/refuel_entry_details',
+                            arguments: RefuelEntryDetailsPageArgs(
+                                refuelEntry: refuelEntrySnapshot.data!));
+                      },
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Row(
@@ -108,23 +114,26 @@ class _RefuelHistoryPageState extends State<RefuelHistoryPage> {
                               children: [
                                 Text(
                                   '${refuelEntrySnapshot.data!.refuelAmount} L',
-                                  style: Theme.of(context).textTheme.titleMedium,
+                                  style:
+                                      Theme.of(context).textTheme.titleMedium,
                                 ),
-                                Text('${refuelEntrySnapshot.data!.totalPrice} 円'),
+                                Text(
+                                    '${refuelEntrySnapshot.data!.totalPrice} 円'),
                               ],
                             ),
                             Expanded(
                               flex: 1,
                               child: FutureBuilder(
-                                future:
-                                _getTrip(refuelEntrySnapshot.data!.timestamp),
+                                future: _getTrip(
+                                    refuelEntrySnapshot.data!.timestamp),
                                 builder: (context, tripSnapshot) {
                                   return Text(
                                     tripSnapshot.data != null
                                         ? '${(tripSnapshot.data! / refuelEntrySnapshot.data!.refuelAmount * 10.0).floor() / 10.0} km/L'
                                         : '--- km/L',
                                     textAlign: TextAlign.end,
-                                    style: Theme.of(context).textTheme.titleLarge,
+                                    style:
+                                        Theme.of(context).textTheme.titleLarge,
                                   );
                                 },
                               ),
