@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:fuel_efficiency_record/components/refuel_entry_editor.dart';
 import 'package:fuel_efficiency_record/models/refuel_entry.dart';
-import 'package:intl/intl.dart';
 
 class RefuelEntryDetailsPageArgs {
   const RefuelEntryDetailsPageArgs({
+    required this.vehicleName,
     required this.refuelEntry,
   });
 
+  final String vehicleName;
   final RefuelEntry? refuelEntry;
 }
 
@@ -23,8 +25,6 @@ class RefuelEntryDetailsPage extends StatefulWidget {
 }
 
 class _RefuelEntryDetailsPageState extends State<RefuelEntryDetailsPage> {
-  static final _dateTimeString = DateFormat('yyyy/MM/dd hh:mm').format;
-
   @override
   void initState() {
     super.initState();
@@ -32,24 +32,11 @@ class _RefuelEntryDetailsPageState extends State<RefuelEntryDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final vehicleName = widget.refuelEntryArgs.vehicleName;
     final refuelEntry = widget.refuelEntryArgs.refuelEntry;
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('給油履歴詳細'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-        ),
-      ),
-      body: refuelEntry == null
-          ? const Center(
-              child: Text('ERR!'),
-            )
-          : SingleChildScrollView(
-              child: Text(_dateTimeString(refuelEntry.dateTime)),
-            ),
+    return RefuelEntryEditor(
+      vehicleName: vehicleName,
+      refuelEntry: refuelEntry,
     );
   }
 }
