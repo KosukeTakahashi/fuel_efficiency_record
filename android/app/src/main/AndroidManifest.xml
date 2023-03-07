@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="jp.dev.kosuke.fuel_efficiency_record">
    <application
-        android:label="fuel_efficiency_record"
+        android:label="燃費記録"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
