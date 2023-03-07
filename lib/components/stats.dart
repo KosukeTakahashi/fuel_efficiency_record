@@ -12,7 +12,8 @@ class Stats extends StatelessWidget {
   final int? odometer;
   final int? totalFuelAmount;
 
-  TableRow _statsItem<T>(BuildContext context, String title, T value, String unit) =>
+  TableRow _statsItem<T>(
+          BuildContext context, String title, T value, String unit) =>
       TableRow(
         children: [
           Text(title),
@@ -40,7 +41,14 @@ class Stats extends StatelessWidget {
         3: IntrinsicColumnWidth(),
       },
       children: [
-        _statsItem(context, '最高燃費', bestFuelEfficiency == null ? '---' : (bestFuelEfficiency! * 10).floor() / 10.0, 'km/L'),
+        _statsItem(
+          context,
+          '最高燃費',
+          bestFuelEfficiency == null || bestFuelEfficiency!.isNaN
+              ? '---'
+              : (bestFuelEfficiency! * 10).round() / 10.0,
+          'km/L',
+        ),
         _statsItem(context, '走行距離', odometer?.toString() ?? '---', 'km'),
         _statsItem(context, '総給油量', totalFuelAmount?.toString() ?? '---', 'L'),
       ],
