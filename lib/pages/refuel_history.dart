@@ -1,6 +1,11 @@
+import 'dart:io';
+
+import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:fuel_efficiency_record/models/refuel_entry.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:fuel_efficiency_record/constants.dart';
@@ -90,8 +95,18 @@ class _RefuelHistoryPageState extends State<RefuelHistoryPage> {
           // ),
           PopupMenuButton(
             itemBuilder: (context) => [
-              PopupMenuItem<int>(
+              PopupMenuItem(
                 value: 0,
+                child: Row(
+                  children: const [
+                    Icon(Icons.exit_to_app),
+                    SizedBox(width: 8.0),
+                    Text('給油履歴をエクスポート...'),
+                  ],
+                ),
+              ),
+              PopupMenuItem<int>(
+                value: 1,
                 child: Row(
                   children: const [
                     Icon(
@@ -110,6 +125,25 @@ class _RefuelHistoryPageState extends State<RefuelHistoryPage> {
             onSelected: (value) async {
               switch (value) {
                 case 0:
+                  _db ??= await _openDatabase();
+                  final vehicleName = widget.refuelHistoryArgs.vehicleName;
+                  final refuelEntries = (await _db!.query(vehicleName)).map((valMap) => valMap.values.toList()).toList();
+                  final csv =
+                    '${RefuelEntry.timestampFieldName}, '
+                    '${RefuelEntry.dateTimeFieldName}, '
+                    '${RefuelEntry.refuelAmountFieldName}, '
+                    '${RefuelEntry.unitPriceFieldName}, '
+                    '${RefuelEntry.totalPriceFieldName}, '
+                    '${RefuelEntry.odometerFieldName}\n'
+                    '${const ListToCsvConverter().convert(refuelEntries)}';
+                  final fileName = '$vehicleName-${DateTime.now().millisecondsSinceEpoch}.csv';
+                  final filePath = join((await getTemporaryDirectory()).path, fileName);
+                  final file = File(filePath);
+                  await file.writeAsString(csv);
+                  final xFiles = <XFile>[XFile(filePath, name: '$vehicleName.csv')];
+                  await Share.shareXFiles(xFiles, text: 'CSVファイルを保存');
+                  break;
+                case 1:
                   final doDelete = await showDialog(
                     context: context,
                     builder: (context) => AlertDialog(

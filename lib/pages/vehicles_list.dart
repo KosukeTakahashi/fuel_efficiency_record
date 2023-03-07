@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:fuel_efficiency_record/components/new_vehicle_dialog.dart';
+import 'package:fuel_efficiency_record/components/vehicle_name_dialog.dart';
 import 'package:fuel_efficiency_record/constants.dart';
 import 'package:fuel_efficiency_record/queries.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'dashboard.dart';
@@ -43,6 +44,35 @@ class _VehiclesListPageState extends State<VehiclesListPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('車両一覧'),
+        actions: [
+          PopupMenuButton(
+            itemBuilder: (context) => [
+              PopupMenuItem<int>(
+                value: 0,
+                child: Row(
+                  children: const [
+                    Icon(Icons.info_outline),
+                    SizedBox(width: 8.0),
+                    Text('About'),
+                  ],
+                ),
+              ),
+            ],
+            onSelected: (value) {
+              switch (value) {
+                case 0:
+                  PackageInfo.fromPlatform().then((info) {
+                    showLicensePage(
+                      context: context,
+                      applicationName: info.appName,
+                      applicationVersion: info.version,
+                    );
+                  });
+                  break;
+              }
+            },
+          )
+        ],
       ),
       body: FutureBuilder(
         future: _getVehicles(),
@@ -53,6 +83,22 @@ class _VehiclesListPageState extends State<VehiclesListPage> {
                 width: 16.0,
                 height: 16.0,
                 child: CircularProgressIndicator(),
+              ),
+            );
+          }
+
+          if (snapshot.data!.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(
+                    Icons.directions_car_outlined,
+                    size: 64.0,
+                  ),
+                  SizedBox(height: 16.0),
+                  Text('車両はありません'),
+                ],
               ),
             );
           }
@@ -94,20 +140,20 @@ class _VehiclesListPageState extends State<VehiclesListPage> {
                             _db ??= await _openDatabase();
                             try {
                               final maxOdometerVal =
-                              await maxOdometer(_db!, snapshot.data![idx]);
+                                  await maxOdometer(_db!, snapshot.data![idx]);
                               final minOdometerVal =
-                              await minOdometer(_db!, snapshot.data![idx]);
+                                  await minOdometer(_db!, snapshot.data![idx]);
                               final totalFuelAmountVal = await totalFuelAmount(
                                   _db!, snapshot.data![idx]);
                               final firstFuelAmountVal = await firstFuelAmount(
                                   _db!, snapshot.data![idx]);
                               return (maxOdometerVal == null ||
-                                  minOdometerVal == null ||
-                                  totalFuelAmountVal == null ||
-                                  firstFuelAmountVal == null)
+                                      minOdometerVal == null ||
+                                      totalFuelAmountVal == null ||
+                                      firstFuelAmountVal == null)
                                   ? null
                                   : (maxOdometerVal - minOdometerVal) /
-                                  (totalFuelAmountVal - firstFuelAmountVal);
+                                      (totalFuelAmountVal - firstFuelAmountVal);
                             } on DatabaseException catch (_) {
                               return null;
                             }
@@ -154,7 +200,7 @@ class _VehiclesListPageState extends State<VehiclesListPage> {
         onPressed: () async {
           await showDialog(
             context: context,
-            builder: (context) => const NewVehicleDialog(),
+            builder: (context) => const VehicleNameDialog(),
           );
           setState(() {});
         },

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fuel_efficiency_record/components/vehicle_name_dialog.dart';
 import 'package:fuel_efficiency_record/pages/refuel_history.dart';
 import 'package:fuel_efficiency_record/queries.dart';
 import 'package:sqflite/sqflite.dart';
@@ -138,6 +139,16 @@ class _DashboardPageState extends State<DashboardPage> {
                 value: 1,
                 child: Row(
                   children: const [
+                    Icon(Icons.edit),
+                    SizedBox(width: 8.0),
+                    Text('車両名を編集'),
+                  ],
+                ),
+              ),
+              PopupMenuItem<int>(
+                value: 2,
+                child: Row(
+                  children: const [
                     Icon(Icons.delete, color: Colors.red),
                     SizedBox(width: 8.0),
                     Text('車両を削除', style: TextStyle(color: Colors.red)),
@@ -151,6 +162,13 @@ class _DashboardPageState extends State<DashboardPage> {
                   break;
                 case 1:
                   showDialog(
+                      context: context,
+                      builder: (context) => VehicleNameDialog(
+                          currentName: widget.dashboardArgs.vehicleName),
+                  ).then((_) => setState(() {}));
+                  break;
+                case 2:
+                  showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
                       title: const Text('車両データの削除'),
@@ -163,8 +181,8 @@ class _DashboardPageState extends State<DashboardPage> {
                           },
                         ),
                         TextButton(
-                          child: const Text(
-                              '削除', style: TextStyle(color: Colors.red)),
+                          child: const Text('削除',
+                              style: TextStyle(color: Colors.red)),
                           onPressed: () {
                             Navigator.of(context).pop(true);
                           },
