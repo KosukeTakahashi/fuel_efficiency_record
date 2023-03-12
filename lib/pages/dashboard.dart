@@ -58,7 +58,8 @@ class _DashboardPageState extends State<DashboardPage> {
           '${RefuelEntry.refuelAmountFieldName} REAL,'
           '${RefuelEntry.unitPriceFieldName} INTEGER,'
           '${RefuelEntry.totalPriceFieldName} INTEGER,'
-          '${RefuelEntry.odometerFieldName} INTEGER)');
+          '${RefuelEntry.odometerFieldName} INTEGER,'
+          '${RefuelEntry.isFullTankFieldName} INTEGER)');
     }
 
     final maxOdometerVal =
@@ -92,10 +93,11 @@ class _DashboardPageState extends State<DashboardPage> {
     });
 
     final bestFuelEfficiencyRes = await db.rawQuery('SELECT '
-        'MAX((H1.${RefuelEntry.odometerFieldName} - H2.${RefuelEntry.odometerFieldName}) / H1.${RefuelEntry.refuelAmountFieldName}) AS best_fuel_efficiency '
-        'FROM ${widget.dashboardArgs.vehicleName} H1, ${widget.dashboardArgs.vehicleName} H2 '
+        'MAX((H1.${RefuelEntry.odometerFieldName} - H2.${RefuelEntry.odometerFieldName}) / SUM(H3.${RefuelEntry.refuelAmountFieldName})) AS best_fuel_efficiency '
+        'FROM ${widget.dashboardArgs.vehicleName} H1, ${widget.dashboardArgs.vehicleName} H2, ${widget.dashboardArgs.vehicleName} H3 '
         'WHERE H2.${RefuelEntry.timestampFieldName} = '
-        '(SELECT MAX(${RefuelEntry.timestampFieldName}) FROM ${widget.dashboardArgs.vehicleName} WHERE ${RefuelEntry.timestampFieldName} < H1.${RefuelEntry.timestampFieldName});');
+        '(SELECT MAX(${RefuelEntry.timestampFieldName}) FROM ${widget.dashboardArgs.vehicleName} WHERE ${RefuelEntry.timestampFieldName} < H1.${RefuelEntry.timestampFieldName} AND ${RefuelEntry.isFullTankFieldName} <> 0) '
+        'AND H3.${RefuelEntry.timestampFieldName} <= H1.${RefuelEntry.timestampFieldName} AND H3.${RefuelEntry.timestampFieldName} > H2.${RefuelEntry.timestampFieldName};');
     if (bestFuelEfficiencyRes[0]['best_fuel_efficiency'] != null) {
       setState(() {
         _bestFuelEfficiency =

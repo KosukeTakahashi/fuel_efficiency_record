@@ -35,6 +35,8 @@ class _RefuelEntryEditorState extends State<RefuelEntryEditor> {
   int? _unitPrice;
   int? _totalPrice;
   int? _odometer;
+  bool _isFullTank = true;
+  double? _totalRefuelAmount; // 前回の満タン給油からの総給油量
   bool _isRegisterInProgress = false;
 
   static String? _intFormValidator(String? input) {
@@ -103,6 +105,9 @@ class _RefuelEntryEditorState extends State<RefuelEntryEditor> {
     _odometerTextFieldController.text = widget.refuelEntry!.odometer.toString();
     _dateTextFieldController.text = _dateToString(widget.refuelEntry!.dateTime);
     _timeTextFieldController.text = _timeToString(widget.refuelEntry!.dateTime);
+    setState(() {
+      _isFullTank = widget.refuelEntry!.isFullTank;
+    });
   }
 
   @override
@@ -115,9 +120,16 @@ class _RefuelEntryEditorState extends State<RefuelEntryEditor> {
       final prevRefuelRes = await db.query(
         widget.vehicleName,
         where:
-            '${RefuelEntry.timestampFieldName} = (SELECT MAX(${RefuelEntry.timestampFieldName}) FROM '
-            '${widget.vehicleName} ${widget.refuelEntry == null ? '' : 'WHERE ${RefuelEntry.timestampFieldName} < ${widget.refuelEntry!.timestamp}'})',
+            '${RefuelEntry.timestampFieldName} = (SELECT MAX(${RefuelEntry.timestampFieldName}) '
+            'FROM ${widget.vehicleName} '
+            'WHERE ${RefuelEntry.isFullTankFieldName} <> 0 '
+            '${widget.refuelEntry == null ? '' : 'AND ${RefuelEntry.timestampFieldName} < ${widget.refuelEntry!.timestamp}'})',
       );
+      final totalRefuelAmountRes = await db.rawQuery('SELECT '
+          'SUM(${RefuelEntry.refuelAmountFieldName}) as total_refuel '
+          'FROM ${widget.vehicleName} '
+          'WHERE ${RefuelEntry.isFullTankFieldName} = 0 '
+          '${widget.refuelEntry == null ? '' : 'AND ${RefuelEntry.timestampFieldName} < ${widget.refuelEntry!.timestamp}'};');
 
       setState(() {
         if (prevRefuelRes.isNotEmpty) {
@@ -125,13 +137,14 @@ class _RefuelEntryEditorState extends State<RefuelEntryEditor> {
         } else {
           _prevRefuelEntry = null;
         }
+        _totalRefuelAmount = totalRefuelAmountRes[0]['total_refuel'] as double?;
       });
 
       if (widget.refuelEntry != null) {
         final nextRefuelRes = await db.query(
           widget.vehicleName,
           where:
-          '${RefuelEntry.timestampFieldName} = (SELECT MIN(${RefuelEntry.timestampFieldName}) FROM '
+              '${RefuelEntry.timestampFieldName} = (SELECT MIN(${RefuelEntry.timestampFieldName}) FROM '
               '${widget.vehicleName} WHERE ${RefuelEntry.timestampFieldName} > ${widget.refuelEntry!.timestamp})',
         );
 
@@ -203,6 +216,7 @@ class _RefuelEntryEditorState extends State<RefuelEntryEditor> {
                           unitPrice: _unitPrice!,
                           odometer: _odometer!,
                           totalPrice: _totalPrice!,
+                          isFullTank: _isFullTank,
                         );
                         final db = await openDatabase(join(
                             await getDatabasesPath(), refuelHistoryDBName));
@@ -237,6 +251,41 @@ class _RefuelEntryEditorState extends State<RefuelEntryEditor> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text('給油情報'),
+              const SizedBox(height: 16.0),
+              Row(
+                children: [
+                  Checkbox(
+                      value: _isFullTank,
+                      onChanged: (v) {
+                        setState(() {
+                          _isFullTank = v ?? false;
+                        });
+                      }),
+                  const Text('満タン'),
+                  IconButton(
+                    icon: const Icon(Icons.help),
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text('「満タン」フラグ'),
+                            content: const Text('満タン給油でない場合、前回給油からの燃料消費量が不明なため、燃費が計算できません。この場合、次回満タン給油時に、今回の給油を含めて燃費を計算します。'),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                                child: const Text('OK'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ],
+              ),
               const SizedBox(height: 16.0),
               Form(
                 key: _intFormKey,
@@ -491,12 +540,14 @@ class _RefuelEntryEditorState extends State<RefuelEntryEditor> {
                     '今回の平均燃費',
                     (_prevRefuelEntry == null ||
                             _odometer == null ||
-                            _refuelAmount == null)
+                            _refuelAmount == null ||
+                            (!_isFullTank))
                         ? '---'
                         : (_odometer! < _prevRefuelEntry!.odometer)
                             ? '---'
                             : ((_odometer! - _prevRefuelEntry!.odometer) /
-                                        _refuelAmount! *
+                                        (_refuelAmount! +
+                                            (_totalRefuelAmount ?? 0.0)) *
                                         10.0)
                                     .round() /
                                 10.0,

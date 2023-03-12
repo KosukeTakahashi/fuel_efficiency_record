@@ -56,18 +56,40 @@ class _RefuelHistoryPageState extends State<RefuelHistoryPage> {
     return null;
   }
 
-  Future<int?> _getTrip(int timestamp) async {
+  Future<double?> _getFuelEfficiency(RefuelEntry entry) async {
+    if (!entry.isFullTank) {
+      return null;
+    }
+
     _db ??= await _openDatabase();
-    final tripsRes = await _db!.rawQuery('SELECT '
-        'H1.${RefuelEntry.odometerFieldName} - H2.${RefuelEntry.odometerFieldName} AS trip '
+    final timestamp = entry.timestamp;
+    final tripRes = await _db!.rawQuery('SELECT '
+        'H1.${RefuelEntry.odometerFieldName} - H2.${RefuelEntry.odometerFieldName} AS trip, H2.${RefuelEntry.timestampFieldName} as prev_timestamp '
         'FROM ${widget.refuelHistoryArgs.vehicleName} H1, ${widget.refuelHistoryArgs.vehicleName} H2 '
         'WHERE H1.${RefuelEntry.timestampFieldName} = $timestamp '
         'AND H2.${RefuelEntry.timestampFieldName} = '
-        '(SELECT MAX(${RefuelEntry.timestampFieldName}) FROM ${widget.refuelHistoryArgs.vehicleName} WHERE ${RefuelEntry.timestampFieldName} < H1.${RefuelEntry.timestampFieldName});');
-    if (tripsRes.isNotEmpty) {
-      return tripsRes[0]['trip'] as int;
+        '(SELECT MAX(${RefuelEntry.timestampFieldName}) FROM ${widget.refuelHistoryArgs.vehicleName} WHERE ${RefuelEntry.timestampFieldName} < H1.${RefuelEntry.timestampFieldName} AND ${RefuelEntry.isFullTankFieldName} <> 0);');
+    // if (tripRes.isNotEmpty) {
+    //   return tripsRes[0]['trip'] as int;
+    // }
+    // return null;
+    if (tripRes.isEmpty) {
+      return null;
     }
-    return null;
+
+    final trip = tripRes[0]['trip'] as int;
+    final prevFullTankTimestamp = tripRes[0]['prev_timestamp'] as int;
+    final totalRefuelAmountRes = await _db!.rawQuery('SELECT '
+        'SUM(${RefuelEntry.refuelAmountFieldName}) as total_refuel '
+        'FROM ${widget.refuelHistoryArgs.vehicleName} '
+        'WHERE ${RefuelEntry.timestampFieldName} <= $timestamp AND ${RefuelEntry.timestampFieldName} > $prevFullTankTimestamp;');
+
+    if (totalRefuelAmountRes.isEmpty) {
+      return null;
+    }
+
+    final totalRefuelAmount = totalRefuelAmountRes[0]['total_refuel'] as double;
+    return (trip / totalRefuelAmount * 10.0).round() / 10.0;
   }
 
   static final _dateTimeString = DateFormat('yyyy/MM/dd HH:mm').format;
@@ -227,11 +249,12 @@ class _RefuelHistoryPageState extends State<RefuelHistoryPage> {
                             flex: 1,
                             child: FutureBuilder(
                               future:
-                                  _getTrip(refuelEntrySnapshot.data!.timestamp),
-                              builder: (context, tripSnapshot) {
+                                  // _getTrip(refuelEntrySnapshot.data!.timestamp),
+                                  _getFuelEfficiency(refuelEntrySnapshot.data!),
+                              builder: (context, fuelEfficiencySnapshot) {
                                 return Text(
-                                  tripSnapshot.data != null
-                                      ? '${(tripSnapshot.data! / refuelEntrySnapshot.data!.refuelAmount * 10.0).round() / 10.0} km/L'
+                                  fuelEfficiencySnapshot.data != null
+                                      ? '${fuelEfficiencySnapshot.data!} km/L'
                                       : '--- km/L',
                                   textAlign: TextAlign.end,
                                   style: Theme.of(context).textTheme.titleLarge,
