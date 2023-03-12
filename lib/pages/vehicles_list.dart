@@ -5,6 +5,7 @@ import 'package:fuel_efficiency_record/queries.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dashboard.dart';
 
 class VehiclesListPage extends StatefulWidget {
@@ -53,7 +54,17 @@ class _VehiclesListPageState extends State<VehiclesListPage> {
                   children: const [
                     Icon(Icons.info_outline),
                     SizedBox(width: 8.0),
-                    Text('About'),
+                    Text('このアプリについて'),
+                  ],
+                ),
+              ),
+              PopupMenuItem<int>(
+                value: 1,
+                child: Row(
+                  children: const [
+                    Icon(Icons.privacy_tip_outlined),
+                    SizedBox(width: 8.0),
+                    Text('プライバシーポリシー'),
                   ],
                 ),
               ),
@@ -67,6 +78,14 @@ class _VehiclesListPageState extends State<VehiclesListPage> {
                       applicationName: info.appName,
                       applicationVersion: info.version,
                     );
+                  });
+                  break;
+                case 1:
+                  final uri = Uri.parse(privacyPolicyURL);
+                  canLaunchUrl(uri).then((v) {
+                    if (v) {
+                      launchUrl(uri);
+                    }
                   });
                   break;
               }
